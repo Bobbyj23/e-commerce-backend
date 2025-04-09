@@ -3,9 +3,17 @@
 require 'rails_helper'
 
 RSpec.describe ProductsController, type: :controller do
+  let!(:user) { FactoryBot.create(:user) }
   let!(:category) { FactoryBot.create(:category) }
   let!(:product) { FactoryBot.create(:product) }
   let!(:product2) { FactoryBot.create(:product) }
+  let(:token) { JWT.encode(user.id, Rails.application.credentials.secret_key_base) }
+  let(:headers) { { 'Authorization' => "Bearer #{token}" } }
+
+  before(:each) do
+    request.headers.merge! headers
+  end
+
   describe 'GET #index' do
     it 'returns a successful response' do
       get :index

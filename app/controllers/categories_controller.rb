@@ -7,14 +7,12 @@ class CategoriesController < ApplicationController
 
   def show
     Rails.logger.info "CategoriesController#show: Retrieving category with id #{params[:id]}"
-    @category = Category.find_by(id: params[:id])
-    if @category
-      Rails.logger.info "Found category #{@category.id}: #{@category.name}"
-      render json: @category
-    else
+    @category = Category.find(params[:id])
+    Rails.logger.info "Found category #{@category.id}: #{@category.name}"
+    render json: @category
+  rescue ActiveRecord::RecordNotFound
       Rails.logger.info "Failed to find category with id #{params[:id]}"
       render json: { error: "Category not found" }, status: :not_found
-    end
   end
 
   def create

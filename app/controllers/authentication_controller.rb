@@ -20,7 +20,7 @@ class AuthenticationController < ApplicationController
       end
     rescue ActiveRecord::RecordNotFound
       Rails.logger.warn "User not found for username: #{params[:username]}"
-      render json: { error: "unauthorized" }, status: :unauthorized
+      render json: { error: "User Not Found" }, status: :not_found
     rescue KeyError => e
       Rails.logger.warn "Missing parameters: #{e.message}"
       render json: { error: "bad request" }, status: :bad_request
@@ -34,6 +34,6 @@ class AuthenticationController < ApplicationController
 
   def jwt_encode(payload, exp = 24.hours.from_now)
     payload[:exp] = exp.to_i
-    JWT.encode(payload, Rails.application.secrets.secret_key_base)
+    JWT.encode(payload, Rails.application.credentials.secret_key_base)
   end
 end
