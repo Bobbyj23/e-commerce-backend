@@ -8,7 +8,7 @@ class UsersController < ApplicationController
       render json: @user, status: :created
     else
       Rails.logger.info "Failed to create user: #{@user.errors.full_messages}"
-      render json: @user.errors, status: :unprocessable_entity
+      render json: @user.errors.full_messages, status: :unprocessable_entity
     end
   end
 

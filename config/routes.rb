@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  post "login", to: "authentication#login"
   resources :products
   resources :categories
   resources :users, only: [ :create ]
