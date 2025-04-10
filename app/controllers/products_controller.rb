@@ -28,7 +28,7 @@ class ProductsController < ApplicationController
 
   def update
     @product = Product.find(params[:id])
-    Rails.logger.info "ProductsController#update Updating product #{@product.id}: #{@product.name}" if @product
+    Rails.logger.info "ProductsController#update Updating product #{@product.id}: #{@product.name}"
 
     if @product.update(product_params)
       Rails.logger.info "Updated product #{@product.id}: #{@product.name}"
@@ -44,8 +44,13 @@ class ProductsController < ApplicationController
 
   def destroy
     @product = Product.find(params[:id])
-    @product.destroy
-    Rails.logger.info "ProductsController#destroy Deleted product #{@product.id}: #{@product.name}"
+
+    if @product.destroy
+      Rails.logger.info "ProductsController#destroy: Deleted product #{@product.id}: #{@product.name}"
+    else
+      Rails.logger.info "ProductsController#destroy: Failed to delete product #{@product.id}: #{@product.name}"
+      render json: @product.errors.full_messages, status: :unprocessable_entity
+    end
   rescue ActiveRecord::RecordNotFound
     Rails.logger.info "Failed to delete product with id #{params[:id]}, Product not found"
     render json: "Product not found", status: :not_found

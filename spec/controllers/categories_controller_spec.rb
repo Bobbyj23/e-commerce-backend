@@ -11,6 +11,7 @@ RSpec.describe CategoriesController, type: :controller do
     request.headers.merge! headers
   end
 
+  # add a context for unauthorized requests
   describe 'GET #index' do
     it 'returns a successful response' do
       get :index
