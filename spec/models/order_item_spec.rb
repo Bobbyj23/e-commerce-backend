@@ -16,7 +16,6 @@ RSpec.describe OrderItem, type: :model do
     let(:order_item) { FactoryBot.create(:order_item, product: product) }
 
     it 'sets the price before validation' do
-      byebug
       order_item.valid?
       expect(order_item.price).to eq(product.price)
     end
