@@ -16,7 +16,7 @@ RSpec.describe ProductsController, type: :controller do
 
 
   # add a context for unauthorized requests
-  describe 'GET #index' do
+  describe 'GET #index', focus: true do
     it 'returns a successful response' do
       get :index
       expect(response).to have_http_status(:ok)

@@ -9,10 +9,10 @@ RSpec.describe Category, type: :model do
     it { should validate_presence_of(:name) }
   end
 
-  # describe 'factory' do
-  #   it 'is valid with valid attributes' do
-  #     category = FactoryBot.build(:category)
-  #     expect(category).to be_valid
-  #   end
-  # end
+  describe 'factory' do
+    it 'is valid with valid attributes' do
+      category = FactoryBot.build(:category)
+      expect(category).to be_valid
+    end
+  end
 end
