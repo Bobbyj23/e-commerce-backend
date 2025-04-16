@@ -155,6 +155,42 @@ RSpec.describe CategoriesController, type: :controller do
     end
   end
 
+  context 'unauthorized users' do
+    before do
+      request.headers["Authorization"] = nil
+    end
+
+    it 'returns a 401 error for GET #index' do
+      get :index
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'returns a 401 error for GET #show' do
+      get :show, params: { id: category.id }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'returns a 401 error for POST #create' do
+      post :create, params: { category: { name: 'Test Category' } }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'returns a 401 error for PUT #update' do
+      put :update, params: { id: category.id, category: { name: 'Updated Category' } }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'returns a 401 error for DELETE #destroy' do
+      delete :destroy, params: { id: category.id }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
   describe 'category params' do
     controller = CategoriesController.new
     let(:params_hash) { { category: { name: 'Test Category' } } }

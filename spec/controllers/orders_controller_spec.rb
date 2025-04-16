@@ -56,14 +56,14 @@ RSpec.describe OrdersController, type: :controller do
     end
   end
 
-  describe 'PATCH #update' do
+  describe 'PUT #update' do
     it 'updates the order' do
-      patch :update, params: { id: order.id, order: { status: 'shipped' } }
+      put :update, params: { id: order.id, order: { status: 'shipped' } }
       expect(order.reload.status).to eq('shipped')
     end
 
     it 'returns a successful response' do
-      patch :update, params: { id: order.id, order: { status: 'shipped' } }
+      put :update, params: { id: order.id, order: { status: 'shipped' } }
       expect(response).to be_successful
     end
   end
@@ -88,6 +88,42 @@ RSpec.describe OrdersController, type: :controller do
     it 'returns a not found response with an invalid id' do
       get :show, params: { id: 'invalid' }
       expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  context 'unauthorized users' do
+    before do
+      request.headers["Authorization"] = nil
+    end
+
+    it 'returns a 401 error for GET #index' do
+      get :index
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'returns a 401 error for GET #show' do
+      get :show, params: { id: order.id }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'returns a 401 error for POST #create' do
+      post :create, params: { order: { status: 'pending', total: 10.99, order_items_attributes: [ product_id: nil, quantity: 2 ] } }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'returns a 401 error for PUT #update' do
+      put :update, params: { id: order.id, order: { status: 'shipped' } }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'returns a 401 error for DELETE #destroy' do
+      delete :destroy, params: { id: order.id }
+
+      expect(response).to have_http_status(:unauthorized)
     end
   end
 end

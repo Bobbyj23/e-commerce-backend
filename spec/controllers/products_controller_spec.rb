@@ -159,6 +159,42 @@ RSpec.describe ProductsController, type: :controller do
     end
   end
 
+  context 'unauthorized users' do
+    before do
+      request.headers["Authorization"] = nil
+    end
+
+    it 'returns a 401 error for GET #index' do
+      get :index
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'returns a 401 error for GET #show' do
+      get :show, params: { id: product.id }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'returns a 401 error for POST #create' do
+      post :create, params: { product: { name: 'Test Product', description: 'Description', category_id: category.id, price: 10.00 } }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'returns a 401 error for PUT #update' do
+      put :update, params: { id: product.id, product: { name: 'Updated Product' } }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'returns a 401 error for DELETE #destroy' do
+      delete :destroy, params: { id: product.id }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
   describe 'product params' do
     controller = ProductsController.new
     let(:params_hash) { { product: { name: 'Test Product', description: 'Description', category_id: category.id, price: 10.00 } } }
