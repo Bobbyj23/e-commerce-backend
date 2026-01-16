@@ -53,4 +53,4 @@ end
 
 gem "rails-controller-testing", "~> 1.0"
 
-gem "byebug", "~> 12.0"
+gem "byebug", "~> 13.0"
