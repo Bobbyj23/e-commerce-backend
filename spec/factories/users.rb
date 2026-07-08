@@ -10,4 +10,8 @@ FactoryBot.define do
     username { nil }
     email { nil }
   end
+
+  trait :admin do
+    role { :admin }
+  end
 end

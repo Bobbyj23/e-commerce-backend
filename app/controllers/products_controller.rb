@@ -1,6 +1,6 @@
 class ProductsController < ApplicationController
   def index
-    @products = Product.all
+    @products = policy_scope(Product)
     Rails.logger.info "ProductsController#index Found #{@products.count} products"
     render json: @products
   end
@@ -8,6 +8,7 @@ class ProductsController < ApplicationController
   def show
     @product = Product.find_by(id: params[:id])
     if @product
+      authorize @product
       render json: @product
     else
       Rails.logger.warn "Product not found: #{params[:id]}"
@@ -16,6 +17,7 @@ class ProductsController < ApplicationController
   end
 
   def create
+    authorize Product
     @product = Product.new(product_params)
 
     if @product.save
@@ -28,6 +30,7 @@ class ProductsController < ApplicationController
 
   def update
     @product = Product.find(params[:id])
+    authorize @product
 
     if @product.update(product_params)
       render json: @product
@@ -42,6 +45,7 @@ class ProductsController < ApplicationController
 
   def destroy
     @product = Product.find(params[:id])
+    authorize @product
 
     if @product.destroy
       Rails.logger.info "ProductsController: Deleted product #{@product.id}: #{@product.name}"

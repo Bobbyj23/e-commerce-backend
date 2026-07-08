@@ -1,8 +1,16 @@
 class ApplicationController < ActionController::API
+  include Pundit::Authorization
+
   before_action :authenticate_request
   attr_reader :current_user
 
+  rescue_from Pundit::NotAuthorizedError, with: :forbidden
+
   private
+
+  def forbidden
+    render json: { errors: "You are not authorized to perform this action" }, status: :forbidden
+  end
 
   # create test for method
   def authenticate_request

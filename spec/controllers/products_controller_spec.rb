@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe ProductsController, type: :controller do
-  let!(:user) { FactoryBot.create(:user) }
+  let!(:user) { FactoryBot.create(:user, :admin) }
   let!(:category) { FactoryBot.create(:category) }
   let!(:product) { FactoryBot.create(:product) }
   let!(:product2) { FactoryBot.create(:product) }
@@ -192,6 +192,40 @@ RSpec.describe ProductsController, type: :controller do
       delete :destroy, params: { id: product.id }
 
       expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
+  context 'as a customer (non-admin)' do
+    let!(:user) { FactoryBot.create(:user) }
+
+    it 'returns a 403 error for POST #create' do
+      post :create, params: { product: { name: 'Test Product', description: 'Description', category_id: category.id, price: 10.00 } }
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'returns a 403 error for PUT #update' do
+      put :update, params: { id: product.id, product: { name: 'Updated Product' } }
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'returns a 403 error for DELETE #destroy' do
+      delete :destroy, params: { id: product.id }
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'still allows GET #index' do
+      get :index
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it 'still allows GET #show' do
+      get :show, params: { id: product.id }
+
+      expect(response).to have_http_status(:ok)
     end
   end
 

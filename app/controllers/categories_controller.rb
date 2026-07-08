@@ -1,6 +1,6 @@
 class CategoriesController < ApplicationController
   def index
-    @categories = Category.all
+    @categories = policy_scope(Category)
     Rails.logger.info "CategoriesController#index Found #{@categories.count} categories"
     render json: @categories
   end
@@ -9,6 +9,7 @@ class CategoriesController < ApplicationController
     @category = Category.find_by(id: params[:id])
 
     if @category
+      authorize @category
       render json: @category
     else
       Rails.logger.warn "Category not found"
@@ -17,6 +18,7 @@ class CategoriesController < ApplicationController
   end
 
   def create
+    authorize Category
     @category = Category.new(category_params)
 
     if @category.save
@@ -29,6 +31,7 @@ class CategoriesController < ApplicationController
 
   def update
     @category = Category.find(params[:id])
+    authorize @category
 
     if @category.update(category_params)
       render json: @category
@@ -43,6 +46,7 @@ class CategoriesController < ApplicationController
 
   def destroy
     @category = Category.find(params[:id])
+    authorize @category
 
     if @category.destroy
       Rails.logger.info "Deleted category #{@category.id}: #{@category.name}"

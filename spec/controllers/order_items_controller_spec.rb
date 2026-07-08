@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe OrderItemsController, type: :controller do
   let(:user) { FactoryBot.create(:user) }
-  let(:order) { FactoryBot.create(:order) }
+  let(:order) { FactoryBot.create(:order, user: user) }
   let(:product) { FactoryBot.create(:product) }
   let(:order_item) { FactoryBot.create(:order_item, order: order, product: product) }
   let(:token) { (JWT.encode(user.id, Rails.application.credentials.secret_key_base)) }
@@ -90,6 +90,42 @@ RSpec.describe OrderItemsController, type: :controller do
 
       expect(response).to have_http_status(:not_found)
       expect(JSON.parse(response.body)).to include('error' => 'Order item not found')
+    end
+  end
+
+  context "another user's order" do
+    let(:other_user) { FactoryBot.create(:user) }
+    let(:other_order) { FactoryBot.create(:order, user: other_user) }
+    let(:other_order_item) { FactoryBot.create(:order_item, order: other_order, product: product) }
+
+    it 'returns not found for GET #index on an order it does not own' do
+      get :index, params: { order_id: other_order.id }
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'returns not found for GET #show on an order item it does not own' do
+      get :show, params: { id: other_order_item.id }
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'returns not found for POST #create on an order it does not own' do
+      post :create, params: { order_id: other_order.id, order_item: { product_id: product.id, quantity: 1 } }
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'returns not found for PUT #update on an order item it does not own' do
+      put :update, params: { id: other_order_item.id, order_item: { quantity: 5 } }
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'returns not found for DELETE #destroy on an order item it does not own' do
+      delete :destroy, params: { id: other_order_item.id }
+
+      expect(response).to have_http_status(:not_found)
     end
   end
 

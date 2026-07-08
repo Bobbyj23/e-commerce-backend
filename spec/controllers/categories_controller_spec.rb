@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe CategoriesController, type: :controller do
-  let!(:user) { FactoryBot.create(:user) }
+  let!(:user) { FactoryBot.create(:user, :admin) }
   let!(:category) { FactoryBot.create(:category) }
   let!(:category2) { FactoryBot.create(:category) }
   let(:token) { JWT.encode(user.id, Rails.application.credentials.secret_key_base) }
@@ -188,6 +188,34 @@ RSpec.describe CategoriesController, type: :controller do
       delete :destroy, params: { id: category.id }
 
       expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
+  context 'as a customer (non-admin)' do
+    let!(:user) { FactoryBot.create(:user) }
+
+    it 'returns a 403 error for POST #create' do
+      post :create, params: { category: { name: 'Test Category' } }
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'returns a 403 error for PUT #update' do
+      put :update, params: { id: category.id, category: { name: 'Updated Category' } }
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'returns a 403 error for DELETE #destroy' do
+      delete :destroy, params: { id: category.id }
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'still allows GET #index' do
+      get :index
+
+      expect(response).to have_http_status(:ok)
     end
   end
 

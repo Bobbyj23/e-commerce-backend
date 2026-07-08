@@ -12,11 +12,13 @@ class OrderItemsController < ApplicationController
   end
 
   def show
+    authorize @order_item
     render json: @order_item
   end
 
   def create
     @order_item = @order.order_items.build(order_item_params)
+    authorize @order_item
     if @order_item.save
       render json: @order_item, status: :created
     else
@@ -26,6 +28,7 @@ class OrderItemsController < ApplicationController
   end
 
   def update
+    authorize @order_item
     if @order_item.update(order_item_params)
       render json: @order_item
     else
@@ -35,6 +38,7 @@ class OrderItemsController < ApplicationController
   end
 
   def destroy
+    authorize @order_item
     if @order_item.destroy
       Rails.logger.info "OrderItemsController#destroy - Successfully deleted order item #{@order_item.id}"
       head :no_content
@@ -47,7 +51,7 @@ class OrderItemsController < ApplicationController
   private
 
   def set_order
-    @order =Order.find(params[:order_id])
+    @order = current_user.orders.find(params[:order_id])
   rescue ActiveRecord::RecordNotFound
     Rails.logger.warn "OrderItemsController#set_order - Error finding order with id #{params[:order_id]}: Record not found"
     render json: { error: "Order not found" }, status: :not_found
@@ -55,18 +59,15 @@ class OrderItemsController < ApplicationController
   end
 
   def set_order_item
-    begin
-      if params[:order_id].present?
-        @order_item = @order.order_items.find(params[:id])
-      else
-        @order_item = OrderItem.find(params[:id])
-      end
-      @order_item
-    rescue ActiveRecord::RecordNotFound => e
-      Rails.logger.warn "OrderItemsController#set_order_item - Error finding order item with ID #{params[:id]}: #{e.message}"
-      render json: { error: "Order item not found" }, status: :not_found
-      nil
+    if params[:order_id].present?
+      @order_item = @order.order_items.find(params[:id])
+    else
+      @order_item = OrderItem.joins(:order).where(orders: { user_id: current_user.id }).find(params[:id])
     end
+  rescue ActiveRecord::RecordNotFound => e
+    Rails.logger.warn "OrderItemsController#set_order_item - Error finding order item with ID #{params[:id]}: #{e.message}"
+    render json: { error: "Order item not found" }, status: :not_found
+    nil
   end
 
   def order_item_params
