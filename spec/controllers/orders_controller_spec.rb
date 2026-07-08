@@ -47,24 +47,39 @@ RSpec.describe OrdersController, type: :controller do
     end
 
     it 'does not create a new order with invalid params' do
-      expect { post :create, params: { order: { status: nil, total: nil } } }.not_to change(Order, :count)
+      expect { post :create, params: { order: { order_items_attributes: [ product_id: nil, quantity: 2 ] } } }.not_to change(Order, :count)
     end
 
     it 'returns an unprocessable entity response with invalid params' do
-      post :create, params: { order: { status: nil, total: nil } }
+      post :create, params: { order: { order_items_attributes: [ product_id: nil, quantity: 2 ] } }
       expect(response).to have_http_status(422)
+    end
+
+    it 'ignores a client-provided status and always creates the order as pending' do
+      post :create, params: { order: { status: 'delivered', order_items_attributes: [ product_id: product.id, quantity: 2 ] } }
+      expect(JSON.parse(response.body)['status']).to eq('pending')
     end
   end
 
   describe 'PUT #update' do
-    it 'updates the order' do
-      put :update, params: { id: order.id, order: { status: 'shipped' } }
-      expect(order.reload.status).to eq('shipped')
+    it 'updates the order along an allowed transition' do
+      put :update, params: { id: order.id, order: { status: 'processing' } }
+      expect(order.reload.status).to eq('processing')
     end
 
     it 'returns a successful response' do
-      put :update, params: { id: order.id, order: { status: 'shipped' } }
+      put :update, params: { id: order.id, order: { status: 'processing' } }
       expect(response).to be_successful
+    end
+
+    it 'rejects a transition that skips required steps' do
+      put :update, params: { id: order.id, order: { status: 'shipped' } }
+      expect(response).to have_http_status(422)
+    end
+
+    it 'does not change the persisted status when the transition is invalid' do
+      put :update, params: { id: order.id, order: { status: 'shipped' } }
+      expect(order.reload.status).to eq('pending')
     end
   end
 
@@ -87,6 +102,26 @@ RSpec.describe OrdersController, type: :controller do
 
     it 'returns a not found response with an invalid id' do
       get :show, params: { id: 'invalid' }
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  context "another user's order" do
+    let(:other_user) { FactoryBot.create(:user) }
+    let(:other_order) { FactoryBot.create(:order, user: other_user) }
+
+    it 'returns not found for GET #show' do
+      get :show, params: { id: other_order.id }
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'returns not found for PUT #update' do
+      put :update, params: { id: other_order.id, order: { status: 'processing' } }
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'returns not found for DELETE #destroy' do
+      delete :destroy, params: { id: other_order.id }
       expect(response).to have_http_status(:not_found)
     end
   end

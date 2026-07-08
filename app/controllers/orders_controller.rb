@@ -2,17 +2,19 @@ class OrdersController < ApplicationController
   before_action :set_order, only: [ :show, :update, :destroy ]
 
   def index
-    @orders = current_user.orders
+    @orders = policy_scope(Order)
     Rails.logger.info "OrdersController#index Found #{@orders.count} orders"
     render json: @orders
   end
 
   def show
+    authorize @order
     render json: @order
   end
 
   def create
-    @order = current_user.orders.new(order_params)
+    authorize Order
+    @order = current_user.orders.new(order_create_params)
     if @order.save
       render json: @order, status: :created
     else
@@ -22,11 +24,17 @@ class OrdersController < ApplicationController
   end
 
   def update
-    @order.update(order_params)
-    render json: @order
+    authorize @order
+    if @order.update(order_update_params)
+      render json: @order
+    else
+      Rails.logger.warn "OrdersController#update - Failed to update order #{@order.id}: #{@order.errors.full_messages}"
+      render json: { errors: @order.errors.full_messages }, status: :unprocessable_entity
+    end
   end
 
   def destroy
+    authorize @order
     if @order.destroy
       Rails.logger.info "OrdersController#destroy - Successfully deleted order #{@order.id}"
       head :no_content
@@ -46,7 +54,11 @@ class OrdersController < ApplicationController
     nil
   end
 
-  def order_params
-    params.require(:order).permit(:status, :total, :user_id, order_items_attributes: [ :product_id, :quantity, :price, :_destroy, :id ])
+  def order_create_params
+    params.require(:order).permit(order_items_attributes: [ :product_id, :quantity, :_destroy, :id ])
+  end
+
+  def order_update_params
+    params.require(:order).permit(:status, order_items_attributes: [ :product_id, :quantity, :_destroy, :id ])
   end
 end

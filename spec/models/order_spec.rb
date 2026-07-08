@@ -7,10 +7,15 @@ RSpec.describe Order, type: :model do
   end
   describe 'validations' do
     subject { FactoryBot.build(:order) }
-    it { is_expected.to validate_presence_of(:total) }
-    it { is_expected.to validate_numericality_of(:total).is_greater_than_or_equal_to(0) }
     it { is_expected.to validate_presence_of(:status) }
     it { is_expected.to validate_inclusion_of(:status).in_array(%w[pending processing shipped delivered cancelled]) }
+
+    it 'always recalculates total from order_items, ignoring any directly assigned value' do
+      order = FactoryBot.build(:order)
+      order.total = -999
+      order.valid?
+      expect(order.total).not_to eq(-999)
+    end
   end
 
   describe '#calculate_total' do
@@ -24,6 +29,35 @@ RSpec.describe Order, type: :model do
     end
 
     it { expect(order.total).to eq(30) }
+  end
+
+  describe 'status transitions' do
+    it 'always starts as pending, regardless of assigned status' do
+      order = FactoryBot.build(:order, status: 'delivered')
+      order.save
+      expect(order.status).to eq('pending')
+    end
+
+    it 'allows a valid transition' do
+      order = FactoryBot.create(:order)
+      expect(order.update(status: 'processing')).to be true
+      expect(order.reload.status).to eq('processing')
+    end
+
+    it 'rejects a transition that skips steps' do
+      order = FactoryBot.create(:order)
+      expect(order.update(status: 'delivered')).to be false
+      expect(order.errors[:status]).to be_present
+    end
+
+    it 'rejects any transition out of a terminal state' do
+      order = FactoryBot.create(:order)
+      order.update!(status: 'processing')
+      order.update!(status: 'shipped')
+      order.update!(status: 'delivered')
+
+      expect(order.update(status: 'cancelled')).to be false
+    end
   end
 
   describe 'factory' do
