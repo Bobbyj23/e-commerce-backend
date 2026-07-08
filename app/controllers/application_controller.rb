@@ -12,7 +12,6 @@ class ApplicationController < ActionController::API
     render json: { errors: "You are not authorized to perform this action" }, status: :forbidden
   end
 
-  # create test for method
   def authenticate_request
     header = request.headers["Authorization"]
     header = header.split(" ").last if header
