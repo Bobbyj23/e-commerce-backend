@@ -43,6 +43,35 @@ RSpec.describe GraphqlController, type: :controller do
     end
   end
 
+  describe 'orders query batches nested order_items and products (N+1 regression)' do
+    let!(:product_a) { FactoryBot.create(:product) }
+    let!(:product_b) { FactoryBot.create(:product) }
+
+    before do
+      3.times do
+        user.orders.create!(order_items_attributes: [
+          { product_id: product_a.id, quantity: 1 },
+          { product_id: product_b.id, quantity: 1 }
+        ])
+      end
+    end
+
+    it 'issues exactly one query for order_items and one for products, regardless of order count' do
+      counts = Hash.new(0)
+      subscriber = ActiveSupport::Notifications.subscribe('sql.active_record') do |*, payload|
+        counts[:order_items] += 1 if payload[:sql].match?(/FROM "order_items"/)
+        counts[:products] += 1 if payload[:sql].match?(/FROM "products"/)
+      end
+
+      post :execute, params: { query: '{ orders { id orderItems { quantity product { name } } } }' }
+
+      ActiveSupport::Notifications.unsubscribe(subscriber)
+
+      expect(counts[:order_items]).to eq(1)
+      expect(counts[:products]).to eq(1)
+    end
+  end
+
   describe 'updateOrderStatus mutation' do
     let!(:order) { FactoryBot.create(:order, user: user) }
 

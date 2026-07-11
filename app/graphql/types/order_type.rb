@@ -7,5 +7,9 @@ module Types
     field :total, Float, null: false
     field :user, Types::UserType, null: false
     field :order_items, [ Types::OrderItemType ], null: false
+
+    def order_items
+      dataloader.with(Sources::OrderItemsForOrder).load(object.id)
+    end
   end
 end
