@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  post "/graphql", to: "graphql#execute"
   post "login", to: "authentication#login"
   resources :products
   resources :categories
